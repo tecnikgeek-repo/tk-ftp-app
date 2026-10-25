@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<FileZilla3 version="3.70.6" platform="windows">
+    <TkFtp versione="1" cifratura="pbkdf2-sha256+aes-256-gcm" iterazioni="200000" sale="05QTnzsK1JGxn04OWQnkag==" controllo="tZhbcBrtyxFiuVTWKGPb02MO4Hr3fNp8H5mkscZHhNTX9g==" />
+    <Servers>
+        <Server>
+            <Host>ftp.anonimo.it</Host>
+            <Port>21</Port>
+            <Protocol>0</Protocol>
+            <Type>0</Type>
+            <User />
+            <Logontype>0</Logontype>
+            <PasvMode>MODE_PASSIVE</PasvMode>
+            <EncodingType>Auto</EncodingType>
+            <BypassProxy>0</BypassProxy>
+            <Name>Anonimo</Name>
+            <RemoteDir>1 0 3 pub</RemoteDir>
+            <SyncBrowsing>0</SyncBrowsing>
+            <DirectoryComparison>0</DirectoryComparison>
+        </Server>
+        <Server>
+            <Host>ftp.chiedi.it</Host>
+            <Port>21</Port>
+            <Protocol>0</Protocol>
+            <Type>0</Type>
+            <User>luigi</User>
+            <Logontype>2</Logontype>
+            <PasvMode>MODE_PASSIVE</PasvMode>
+            <EncodingType>Auto</EncodingType>
+            <BypassProxy>0</BypassProxy>
+            <Name>Chiedi</Name>
+            <SyncBrowsing>0</SyncBrowsing>
+            <DirectoryComparison>0</DirectoryComparison>
+        </Server>
+        <Server>
+            <Host>ftps.esplicito.it</Host>
+            <Port>21</Port>
+            <Protocol>4</Protocol>
+            <Type>0</Type>
+            <User>sara</User>
+            <TkPass>CrAJfSDegK7nCmUxFq72+NsAlpIwhXZSEfUbpHK5bV0iglI=</TkPass>
+            <Logontype>1</Logontype>
+            <PasvMode>MODE_PASSIVE</PasvMode>
+            <EncodingType>Auto</EncodingType>
+            <BypassProxy>0</BypassProxy>
+            <Name>Esplicito</Name>
+            <RemoteDir>1 0</RemoteDir>
+            <TkWebsite>esplicito.it</TkWebsite>
+            <SyncBrowsing>0</SyncBrowsing>
+            <DirectoryComparison>0</DirectoryComparison>
+        </Server>
+        <Folder expanded="1">1. Clienti<Server>
+                <Host>ftp.chiaro.it</Host>
+                <Port>21</Port>
+                <Protocol>6</Protocol>
+                <Type>0</Type>
+                <User>mario</User>
+                <TkPass>IB0H+FAGHerpHBG9f7gyLwqOci3IL2bBerC36vjIFYHOljfU6OrOopcMTw==</TkPass>
+                <Logontype>1</Logontype>
+                <PasvMode>MODE_PASSIVE</PasvMode>
+                <EncodingType>Auto</EncodingType>
+                <BypassProxy>0</BypassProxy>
+                <Name>Solo in chiaro</Name>
+                <RemoteDir>1 0 3 www 6 public</RemoteDir>
+                <TkWebsite>www.chiaro.it</TkWebsite>
+                <SyncBrowsing>0</SyncBrowsing>
+                <DirectoryComparison>0</DirectoryComparison>
+            </Server>
+            <Folder expanded="1">Napoli<Server>
+                    <Host>ftps.implicito.it</Host>
+                    <Port>990</Port>
+                    <Protocol>3</Protocol>
+                    <Type>0</Type>
+                    <User>anna</User>
+                    <TkPass>icjXPAptgM7GvYReT2ne56lGM0D2g0KMcEBNs6G+KHVfzw==</TkPass>
+                    <Logontype>1</Logontype>
+                    <PasvMode>MODE_ACTIVE</PasvMode>
+                    <EncodingType>Auto</EncodingType>
+                    <BypassProxy>0</BypassProxy>
+                    <Name>Implicito</Name>
+                    <RemoteDir>1 0 8 httpdocs</RemoteDir>
+                    <SyncBrowsing>0</SyncBrowsing>
+                    <DirectoryComparison>0</DirectoryComparison>
+                </Server>
+            </Folder>
+        </Folder>
+        <Folder expanded="1">2. Server<Server>
+                <Host>sftp.chiave.it</Host>
+                <Port>65100</Port>
+                <Protocol>1</Protocol>
+                <Type>0</Type>
+                <User>root</User>
+                <Keyfile>C:\Users\TecnikGeek\.ssh\id_ed25519</Keyfile>
+                <Logontype>5</Logontype>
+                <PasvMode>MODE_PASSIVE</PasvMode>
+                <EncodingType>Auto</EncodingType>
+                <BypassProxy>0</BypassProxy>
+                <Name>Con chiave</Name>
+                <RemoteDir>1 0 3 var 3 www</RemoteDir>
+                <TkWebsite>https://chiave.it/negozio</TkWebsite>
+                <SyncBrowsing>0</SyncBrowsing>
+                <DirectoryComparison>0</DirectoryComparison>
+            </Server>
+        </Folder>
+    </Servers>
+</FileZilla3>
