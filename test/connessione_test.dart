@@ -4,8 +4,10 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tkftpmanager/connessione.dart';
 import 'package:tkftpmanager/editor.dart';
+import 'package:tkftpmanager/fiducia.dart';
 import 'package:tkftpmanager/filezilla.dart';
 import 'package:tkftpmanager/modelli.dart';
 
@@ -52,6 +54,13 @@ void main() {
     if (!conServer) return markTestSkipped('server non avviato');
     final radice = Platform.environment['RADICE']!;
     final s = Sito(host: '127.0.0.1', porta: 2122, protocollo: Protocollo.ftps, utente: 'prova', password: 'segreta');
+    // certificato autofirmato del server di prova: accettato come farebbe l'utente (vedi fiducia_test.dart)
+    SharedPreferences.setMockInitialValues({});
+    try {
+      await Connessione.per(s).apri(s, 'segreta');
+    } on DomandaFiducia catch (d) {
+      await Fiducia.ricorda(d.tipo, d.host, d.porta, d.impronta);
+    }
     final c = Connessione.per(s);
     await c.apri(s, 'segreta');
     await c.creaCartella('/sicura');

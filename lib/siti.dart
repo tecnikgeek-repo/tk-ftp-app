@@ -14,6 +14,7 @@ import 'badge_sito.dart';
 import 'condiviso.dart';
 import 'connessione.dart';
 import 'esplora.dart';
+import 'fiducia.dart';
 import 'filezilla.dart';
 import 'loghi.dart';
 import 'modelli.dart';
@@ -106,6 +107,10 @@ class _SchermataSitiState extends State<SchermataSiti> {
       if (p == null) return;
       password = p;
     }
+    await _apri(s, password);
+  }
+
+  Future<void> _apri(Sito s, String password) async {
     setState(() => _connessioneA = s.nomeVisibile);
     final c = Connessione.per(s);
     try {
@@ -113,6 +118,14 @@ class _SchermataSitiState extends State<SchermataSiti> {
       if (!mounted) return;
       setState(() => _connessioneA = null);
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => SchermataEsplora(sito: s, connessione: c)));
+    } on DomandaFiducia catch (d) {
+      await c.chiudi();
+      if (!mounted) return;
+      setState(() => _connessioneA = null);
+      if (await _fidati(d)) {
+        await Fiducia.ricorda(d.tipo, d.host, d.porta, d.impronta);
+        if (mounted) await _apri(s, password);
+      }
     } catch (e) {
       await c.chiudi();
       if (!mounted) return;
@@ -121,6 +134,23 @@ class _SchermataSitiState extends State<SchermataSiti> {
     } finally {
       await c.chiudi();
     }
+  }
+
+  /// Server mai visto (o cambiato): si mostra l'impronta e si chiede se fidarsi. Nulla è ancora partito:
+  /// né la password né i file.
+  Future<bool> _fidati(DomandaFiducia d) {
+    final cosa = d.tipo == TipoFiducia.chiave ? 'la chiave del server SFTP' : 'il certificato del server FTPS';
+    final cambiato = d.vecchia != null;
+    final testo = cambiato
+        ? 'Per ${d.host}:${d.porta} avevi accettato un\'altra impronta: $cosa è cambiato. Può essere un rinnovo '
+            'fatto dal tuo hosting, ma anche qualcuno che si mette in mezzo per rubare la password '
+            '(succede sui Wi-Fi pubblici). Continua solo se sei sicuro.\n\nPrima:\n${d.vecchia}\n\nOra:\n${d.impronta}'
+        : 'È la prima volta che ti colleghi a ${d.host}:${d.porta} e '
+            '${d.tipo == TipoFiducia.chiave ? '$cosa non è ancora conosciuta' : '$cosa non è firmato da un\'autorità riconosciuta (autofirmato, scaduto o di un altro nome)'}. '
+            'Se puoi, confronta l\'impronta con quella che ti dà il tuo hosting:\n\n${d.impronta}\n\n'
+            'La ricordo: se un giorno cambia, te lo dico prima di mandare la password.';
+    return conferma(context, cambiato ? 'Attenzione: server cambiato' : 'Server da verificare', testo,
+        si: cambiato ? 'Fidati comunque' : 'Fidati e connetti', pericolo: cambiato);
   }
 
   // ---- FileZilla

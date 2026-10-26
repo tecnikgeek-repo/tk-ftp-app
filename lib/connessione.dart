@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 
+import 'fiducia.dart';
 import 'modelli.dart';
 
 typedef Avanzamento = void Function(int fatti, int totale);
@@ -52,8 +53,24 @@ class ConnessioneFtp implements Connessione {
   Completer<void>? _attesaRighe;
   List<int> _daScrivere = [];
   late String _host;
+  late int _porta;
   bool _tls = false;
   bool _mlsd = false;
+  String? _fidato; // impronta del certificato accettata dall'utente per questo server
+  String? _rifiutato; // impronta del certificato non valido appena visto (da chiedere all'utente)
+
+  /// Certificato che il sistema non riconosce (autofirmato, scaduto, di un altro nome): passa solo se
+  /// l'utente l'aveva già accettato; altrimenti la connessione si ferma e si chiede.
+  bool _certificatoNonValido(X509Certificate c) {
+    final impronta = improntaCertificato(c.der);
+    if (impronta == _fidato) return true;
+    _rifiutato = impronta;
+    return false;
+  }
+
+  Exception _erroreTls() => _rifiutato != null
+      ? DomandaFiducia(TipoFiducia.certificato, _host, _porta, _rifiutato!, _fidato)
+      : Exception('Connessione sicura non riuscita con $_host');
   Future<void> _coda = Future.value();
 
   // ---- canale di controllo (RawSocket: serve per passare a TLS a metà strada, «AUTH TLS»)
@@ -124,6 +141,8 @@ class ConnessioneFtp implements Connessione {
   }
 
   Future<_Risposta> _comando(String c) async {
+    // un a capo dentro un nome (anche arrivato dal server) farebbe partire un secondo comando
+    if (c.contains('\r') || c.contains('\n')) throw 'Nome non valido: contiene un a capo';
     _daScrivere = [..._daScrivere, ...utf8.encode('$c\r\n')];
     _scriviResto();
     return _leggiRisposta();
@@ -151,17 +170,19 @@ class ConnessioneFtp implements Connessione {
   @override
   Future<void> apri(Sito sito, String password) async {
     _host = sito.host.trim();
+    _porta = sito.porta;
     final ftps = sito.protocollo == Protocollo.ftps;
     final implicito = sito.tlsImplicito;
+    if (ftps) _fidato = await Fiducia.impronta(TipoFiducia.certificato, _host, _porta);
     try {
       _raw = implicito
           ? await RawSecureSocket.connect(_host, sito.porta,
-              timeout: const Duration(seconds: 15), onBadCertificate: (_) => true)
+              timeout: const Duration(seconds: 15), onBadCertificate: _certificatoNonValido)
           : await RawSocket.connect(_host, sito.porta, timeout: const Duration(seconds: 15));
     } on SocketException catch (e) {
       throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta} (${e.osError?.message ?? e.message})';
     } on HandshakeException {
-      throw 'Connessione sicura non riuscita con ${sito.host}';
+      throw _erroreTls();
     }
     _tls = implicito;
     _ascolta(_raw!);
@@ -171,9 +192,9 @@ class ConnessioneFtp implements Connessione {
       await _esigi('AUTH TLS', errore: 'Il server non accetta FTPS');
       final vecchia = _sub!;
       try {
-        _raw = await RawSecureSocket.secure(_raw!, subscription: vecchia, onBadCertificate: (_) => true);
+        _raw = await RawSecureSocket.secure(_raw!, subscription: vecchia, onBadCertificate: _certificatoNonValido);
       } on HandshakeException {
-        throw 'Connessione sicura non riuscita con ${sito.host}';
+        throw _erroreTls();
       }
       _ascolta(_raw!);
       _tls = true;
@@ -213,7 +234,7 @@ class ConnessioneFtp implements Connessione {
   Future<Socket> _proteggi(Socket dati) async {
     if (!_tls) return dati;
     try {
-      return await SecureSocket.secure(dati, host: _host, onBadCertificate: (_) => true)
+      return await SecureSocket.secure(dati, host: _host, onBadCertificate: _certificatoNonValido)
           .timeout(const Duration(seconds: 20));
     } catch (_) {
       dati.destroy();
@@ -480,25 +501,51 @@ class ConnessioneSftp implements Connessione {
   @override
   Future<void> apri(Sito sito, String password) async {
     final identita = sito.accesso == Accesso.chiave ? chiaviPrivate(sito, password) : null;
-    try {
-      final sock = await SSHSocket.connect(sito.host.trim(), sito.porta, timeout: const Duration(seconds: 15));
+    final host = sito.host.trim();
+    final fidata = await Fiducia.impronta(TipoFiducia.chiave, host, sito.porta);
+    String? vista; // impronta della chiave del server se non è quella accettata
+    // Gli errori del socket arrivano nella zona in cui è stato aperto: chiusa la connessione per una chiave
+    // rifiutata, la libreria scrive ancora sul socket e l'errore resterebbe senza nessuno che lo raccoglie.
+    // Qui il primo errore va ad «apri», quelli del socket già chiuso si lasciano cadere.
+    final pronto = Completer<void>();
+    runZonedGuarded(() async {
+      final sock = await SSHSocket.connect(host, sito.porta, timeout: const Duration(seconds: 15));
       _ssh = SSHClient(
         sock,
         username: sito.utente,
         identities: identita,
+        // la password parte solo dopo questo controllo: a un server sconosciuto o cambiato non arriva
         onPasswordRequest: identita == null ? () => password : null,
-        onVerifyHostKey: (_, _) => true,
+        onVerifyHostKey: (tipo, impronta) {
+          final testo = '$tipo ${utf8.decode(impronta)}';
+          if (testo == fidata) return true;
+          vista = testo;
+          return false;
+        },
       );
       await _ssh!.authenticated.timeout(const Duration(seconds: 20));
       _sftp = await _ssh!.sftp();
-    } on SSHAuthFailError {
-      throw identita != null
-          ? 'Il server non accetta questa chiave: controlla utente e file della chiave'
-          : 'Autenticazione fallita: controlla utente e password';
-    } on SocketException catch (e) {
-      throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta} (${e.osError?.message ?? e.message})';
-    } on TimeoutException {
-      throw 'Il server non risponde';
+      if (!pronto.isCompleted) pronto.complete();
+    }, (e, st) {
+      if (!pronto.isCompleted) return pronto.completeError(e, st);
+      if (e is SocketException) return;
+      Zone.root.handleUncaughtError(e, st);
+    });
+    try {
+      await pronto.future;
+    } catch (e) {
+      // chiave rifiutata qui sopra: la libreria chiude con un suo errore, si chiede all'utente
+      if (vista != null) throw DomandaFiducia(TipoFiducia.chiave, host, sito.porta, vista!, fidata);
+      if (e is SSHAuthFailError) {
+        throw identita != null
+            ? 'Il server non accetta questa chiave: controlla utente e file della chiave'
+            : 'Autenticazione fallita: controlla utente e password';
+      }
+      if (e is SocketException) {
+        throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta} (${e.osError?.message ?? e.message})';
+      }
+      if (e is TimeoutException) throw 'Il server non risponde';
+      rethrow;
     }
   }
 
