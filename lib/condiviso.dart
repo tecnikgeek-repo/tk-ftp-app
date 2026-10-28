@@ -1,5 +1,5 @@
 // Siti condivisi col computer: il file «tk-ftp-siti.xml» che tk-ftp per computer tiene nella cartella scelta
-// (per esempio Dropbox). Sul telefono si sceglie una volta e resta collegato (Android); a ogni sincronizzazione
+// (per esempio una cartella nel cloud). Sul telefono si sceglie una volta e resta collegato (Android); a ogni sincronizzazione
 // si leggono i siti del computer (nuovi e cambiati entrano, niente si cancella) e si riscrive il file con tutti
 // i siti, così il computer prende quelli del telefono. Password cifrate con la frase segreta (cifratura.dart).
 import 'dart:convert';
@@ -373,7 +373,7 @@ class _SchermataCondivisoState extends State<SchermataCondiviso> {
                   const SizedBox(height: 8),
                   const Text(
                     'Sul computer, in tk-ftp → Impostazioni → «Siti condivisi col telefono», scegli una cartella '
-                    'che arriva anche qui (per esempio Dropbox). Lì nasce il file «$nomeFileCondiviso»: '
+                    'che arriva anche qui (per esempio una cartella nel cloud). Lì nasce il file «$nomeFileCondiviso»: '
                     'sceglilo qui sotto una volta sola.',
                     style: TextStyle(height: 1.4),
                   ),
