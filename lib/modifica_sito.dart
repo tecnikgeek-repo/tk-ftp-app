@@ -256,7 +256,7 @@ class _SchermataModificaSitoState extends State<SchermataModificaSito> {
                     ),
                     const Padding(
                       padding: EdgeInsets.only(top: 6, left: 2),
-                      child: Text('Chiave privata OpenSSH (per esempio dalla cartella Dropbox). Resta cifrata nel telefono.',
+                      child: Text('Chiave privata OpenSSH (per esempio da una cartella nel cloud). Resta cifrata nel telefono.',
                           style: TextStyle(color: grigio500, fontSize: 12.5)),
                     ),
                   ],
@@ -335,7 +335,7 @@ class _SchermataModificaSitoState extends State<SchermataModificaSito> {
                   ]),
                   _etichetta('Cartella remota iniziale'),
                   TextField(controller: _remota, autocorrect: false, decoration: const InputDecoration(hintText: '/')),
-                  _etichetta('Cartella locale (per FileZilla)'),
+                  _etichetta('Cartella locale (per altri programmi FTP)'),
                   TextField(controller: _locale, autocorrect: false),
                   _etichetta('Gruppo'),
                   Autocomplete<String>(

@@ -169,14 +169,14 @@ class _SchermataSitiState extends State<SchermataSiti> {
           ),
           ListTile(
             leading: const Icon(Icons.file_download_rounded, color: accento),
-            title: const Text('Importa da FileZilla'),
-            subtitle: const Text('Scegli il file .xml esportato da FileZilla o dal vecchio tk-ftp'),
+            title: const Text('Importa siti da file .xml'),
+            subtitle: const Text('Scegli il file .xml esportato da un altro programma FTP o dal vecchio tk-ftp'),
             onTap: () => Navigator.pop(c, 0),
           ),
           ListTile(
             leading: const Icon(Icons.file_upload_rounded, color: accento),
-            title: const Text('Esporta per FileZilla'),
-            subtitle: const Text('Tutti i siti in un file .xml da aprire con FileZilla'),
+            title: const Text('Esporta siti in file .xml'),
+            subtitle: const Text('Tutti i siti in un file .xml da aprire con altri programmi FTP'),
             onTap: () => Navigator.pop(c, 1),
           ),
           const SizedBox(height: 8),
@@ -236,7 +236,7 @@ class _SchermataSitiState extends State<SchermataSiti> {
     }
     final note = [
       if (esito.saltati > 0) '${esito.saltati} con protocolli non gestiti dall\'app (lasciati fuori)',
-      if (esito.bloccate > 0) '${esito.bloccate} password protette dalla password principale di FileZilla (da riscrivere)',
+      if (esito.bloccate > 0) '${esito.bloccate} password protette dalla password principale dell\'altro programma (da riscrivere)',
       if (esito.cifrato && esito.decifrate == 0) 'password cifrate non lette (manca la frase segreta)',
     ];
     // export vecchi (o di FileZilla) con le password solo in base64: chi ha il file le legge tutte
@@ -274,12 +274,12 @@ class _SchermataSitiState extends State<SchermataSiti> {
     if (Platform.isAndroid) {
       final p = await FilePicker.saveFile(fileName: 'sitemanager.xml', bytes: xml, mimeType: 'text/xml');
       if (p != null && mounted) {
-        avviso(context, 'Siti esportati. Le password sono solo in base64, come in FileZilla: tieni il file al sicuro');
+        avviso(context, 'Siti esportati. Le password sono solo in base64, come negli altri programmi FTP: tieni il file al sicuro');
       }
     } else {
       final f = File('${(await getTemporaryDirectory()).path}/sitemanager.xml');
       await f.writeAsBytes(xml);
-      await SharePlus.instance.share(ShareParams(files: [XFile(f.path)], text: 'Siti tk-ftp per FileZilla'));
+      await SharePlus.instance.share(ShareParams(files: [XFile(f.path)], text: 'Siti tk-ftp'));
     }
   }
 
@@ -449,7 +449,7 @@ class _SchermataSitiState extends State<SchermataSiti> {
                     _cercando = !_cercando;
                     if (!_cercando) _cerca = '';
                   })),
-              AzioneTk(Icons.swap_vert_rounded, 'FileZilla', _fileZilla),
+              AzioneTk(Icons.swap_vert_rounded, 'Importa / esporta', _fileZilla),
               AzioneTk(Icons.tune_rounded, 'Impostazioni', _impostazioni),
               AzioneTk(Icons.info, 'Informazioni', _informazioni),
             ],
@@ -492,13 +492,13 @@ class _SchermataSitiState extends State<SchermataSiti> {
             const Text('Nessun sito salvato', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             const Text(
-              'Aggiungi un sito con «Nuovo sito» oppure importa quelli che hai già in FileZilla '
-              '(anche dalla tk-ftp precedente: lì usa «Esporta per FileZilla»).',
+              'Aggiungi un sito con «Nuovo sito» oppure importa quelli che hai già in un altro programma FTP '
+              '(anche dalla tk-ftp precedente: lì usa «Esporta»).',
               textAlign: TextAlign.center,
               style: TextStyle(color: grigio500, height: 1.4),
             ),
             const SizedBox(height: 16),
-            FilledButton.icon(onPressed: _importa, icon: const Icon(Icons.file_download_rounded), label: const Text('Importa da FileZilla')),
+            FilledButton.icon(onPressed: _importa, icon: const Icon(Icons.file_download_rounded), label: const Text('Importa siti da file .xml')),
           ]),
         ),
       ]);
