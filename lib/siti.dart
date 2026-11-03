@@ -297,7 +297,7 @@ class _SchermataSitiState extends State<SchermataSiti> {
               ('File condiviso col computer', arch != null && FileCondiviso(arch).collegato ? 'collegato' : 'no'),
             ],
         notaDati: 'Restano su questo telefono: password e chiavi SSH nella cassaforte cifrata del sistema '
-            '(Keystore su Android, Portachiavi su iPhone), mai in chiaro né sui server di TecnikGeek.',
+            'mai in chiaro né sui server di TecnikGeek.',
         interruttori: (_) => [
               StatefulBuilder(
                 builder: (_, set) => RigaInterruttore(
