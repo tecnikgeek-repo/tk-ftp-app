@@ -35,6 +35,12 @@ class AppTkFtp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+        // iPhone: la tastiera non ha un tasto per chiuderla, si chiude toccando fuori dal campo
+        builder: (_, figlio) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: figlio,
+        ),
         title: 'tk-ftp',
         debugShowCheckedModeBanner: false,
         theme: temaKit(),
