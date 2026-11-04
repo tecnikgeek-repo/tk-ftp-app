@@ -31,7 +31,7 @@ class _SchermataImmagineState extends State<SchermataImmagine> {
         await widget.connessione.scarica(widget.file.percorso, f);
         if (mounted) setState(() => _file = f);
       } catch (e) {
-        if (mounted) setState(() => _errore = '$e');
+        if (mounted) setState(() => _errore = fraseErrore('Immagine non disponibile.', e));
       }
     }();
   }

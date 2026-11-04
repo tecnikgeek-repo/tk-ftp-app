@@ -130,7 +130,7 @@ class _SchermataSitiState extends State<SchermataSiti> {
       await c.chiudi();
       if (!mounted) return;
       setState(() => _connessioneA = null);
-      avviso(context, '$e'.replaceFirst('Exception: ', ''));
+      avviso(context, fraseErrore('Collegamento non riuscito.', e));
     } finally {
       await c.chiudi();
     }
@@ -225,7 +225,7 @@ class _SchermataSitiState extends State<SchermataSiti> {
         }
       }
     } catch (e) {
-      if (mounted) avviso(context, 'Importazione non riuscita: $e');
+      if (mounted) avviso(context, fraseErrore('Importazione non riuscita.', e));
       return;
     }
     if (!mounted) return;

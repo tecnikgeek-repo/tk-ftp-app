@@ -54,7 +54,7 @@ class _SchermataEditorState extends State<SchermataEditor> {
       });
     } catch (e) {
       if (!mounted) return;
-      avviso(context, 'Errore apertura: $e');
+      avviso(context, fraseErrore('Non riesco ad aprire il file.', e));
       Navigator.of(context).pop();
     }
   }
@@ -84,7 +84,7 @@ class _SchermataEditorState extends State<SchermataEditor> {
       setState(() => _modificato = false);
       avviso(context, 'Salvato sul server');
     } catch (e) {
-      if (mounted) avviso(context, 'Errore salvataggio: $e');
+      if (mounted) avviso(context, fraseErrore('File non salvato sul server.', e));
     } finally {
       if (mounted) setState(() => _occupato = false);
     }

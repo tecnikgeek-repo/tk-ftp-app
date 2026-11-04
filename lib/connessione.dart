@@ -32,6 +32,32 @@ int _ordina(FileRemoto a, FileRemoto b) {
 
 // ======================================================================= FTP / FTPS
 
+/// Il motivo in italiano per le risposte d'errore del server: il loro testo è tecnico e spesso in inglese.
+String motivoServer(int codice) {
+  switch (codice) {
+    case 421:
+      return 'il server è occupato o ha chiuso la connessione: riprova tra poco';
+    case 425:
+    case 426:
+      return 'il canale per i dati si è interrotto: riprova';
+    case 450:
+    case 550:
+      return 'il file o la cartella non esiste, oppure non hai il permesso';
+    case 451:
+      return 'il server ha avuto un problema: riprova tra poco';
+    case 452:
+    case 552:
+      return 'sul server lo spazio è finito';
+    case 530:
+    case 532:
+      return 'accesso non autorizzato: controlla utente e password';
+    case 553:
+      return 'il server non accetta questo nome';
+    default:
+      return 'il server ha rifiutato l\'operazione';
+  }
+}
+
 class _Risposta {
   _Risposta(this.codice, this.testo);
   final int codice;
@@ -68,9 +94,9 @@ class ConnessioneFtp implements Connessione {
     return false;
   }
 
-  Exception _erroreTls() => _rifiutato != null
+  Object _erroreTls() => _rifiutato != null
       ? DomandaFiducia(TipoFiducia.certificato, _host, _porta, _rifiutato!, _fidato)
-      : Exception('Connessione sicura non riuscita con $_host');
+      : 'Connessione sicura non riuscita con $_host';
   Future<void> _coda = Future.value();
 
   // ---- canale di controllo (RawSocket: serve per passare a TLS a metà strada, «AUTH TLS»)
@@ -150,7 +176,7 @@ class ConnessioneFtp implements Connessione {
 
   Future<_Risposta> _esigi(String c, {String errore = ''}) async {
     final r = await _comando(c);
-    if (!r.ok) throw '${errore.isEmpty ? 'Il server ha rifiutato' : errore}: ${r.testo} (${r.codice})';
+    if (!r.ok) throw '${errore.isEmpty ? 'Operazione non riuscita' : errore}: ${motivoServer(r.codice)}';
     return r;
   }
 
@@ -179,15 +205,15 @@ class ConnessioneFtp implements Connessione {
           ? await RawSecureSocket.connect(_host, sito.porta,
               timeout: const Duration(seconds: 15), onBadCertificate: _certificatoNonValido)
           : await RawSocket.connect(_host, sito.porta, timeout: const Duration(seconds: 15));
-    } on SocketException catch (e) {
-      throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta} (${e.osError?.message ?? e.message})';
+    } on SocketException {
+      throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta}: controlla l\'indirizzo e la connessione';
     } on HandshakeException {
       throw _erroreTls();
     }
     _tls = implicito;
     _ascolta(_raw!);
     final saluto = await _leggiRisposta();
-    if (!saluto.ok) throw 'Connessione rifiutata: ${saluto.testo}';
+    if (!saluto.ok) throw 'Connessione rifiutata: ${motivoServer(saluto.codice)}';
     if (ftps && !implicito) {
       await _esigi('AUTH TLS', errore: 'Il server non accetta FTPS');
       final vecchia = _sub!;
@@ -225,7 +251,7 @@ class ConnessioneFtp implements Connessione {
       final m = RegExp(r'\|\|\|(\d+)\|').firstMatch(r.testo);
       if (r.codice == 229 && m != null) porta = int.parse(m.group(1)!);
     }
-    if (porta == null) throw 'Il server non accetta la modalità passiva: ${r.testo}';
+    if (porta == null) throw 'Il server non accetta la modalità passiva';
     // si usa sempre l'indirizzo del server (l'IP del PASV è spesso quello interno, dietro NAT)
     return Socket.connect(_host, porta, timeout: const Duration(seconds: 15));
   }
@@ -244,7 +270,7 @@ class ConnessioneFtp implements Connessione {
 
   Future<void> _fine() async {
     final r = await _leggiRisposta();
-    if (!r.ok) throw '${r.testo} (${r.codice})';
+    if (!r.ok) throw 'Operazione non riuscita: ${motivoServer(r.codice)}';
   }
 
   @override
@@ -256,7 +282,7 @@ class ConnessioneFtp implements Connessione {
           grezzo.destroy();
           // alcuni server non capiscono «-a»
           if (!_mlsd) return _elencaSemplice(cartella);
-          throw 'Elenco non riuscito: ${r.testo}';
+          throw 'Elenco non riuscito: ${motivoServer(r.codice)}';
         }
         final ricevuti = BytesBuilder(copy: false);
         await (await _proteggi(grezzo)).listen(ricevuti.add).asFuture<void>();
@@ -269,7 +295,7 @@ class ConnessioneFtp implements Connessione {
     final r = await _comando('LIST');
     if (!r.avviato) {
       grezzo.destroy();
-      throw 'Elenco non riuscito: ${r.testo}';
+      throw 'Elenco non riuscito: ${motivoServer(r.codice)}';
     }
     final ricevuti = BytesBuilder(copy: false);
     await (await _proteggi(grezzo)).listen(ricevuti.add).asFuture<void>();
@@ -296,7 +322,7 @@ class ConnessioneFtp implements Connessione {
         final r = await _comando('RETR $remoto');
         if (!r.avviato) {
           grezzo.destroy();
-          throw 'Scaricamento non riuscito: ${r.testo}';
+          throw 'Scaricamento non riuscito: ${motivoServer(r.codice)}';
         }
         final dati = await _proteggi(grezzo);
         final out = locale.openWrite();
@@ -317,7 +343,7 @@ class ConnessioneFtp implements Connessione {
         final r = await _comando('STOR $remoto');
         if (!r.avviato) {
           grezzo.destroy();
-          throw 'Caricamento non riuscito: ${r.testo}';
+          throw 'Caricamento non riuscito: ${motivoServer(r.codice)}';
         }
         final dati = await _proteggi(grezzo);
         var fatti = 0;
@@ -357,7 +383,7 @@ class ConnessioneFtp implements Connessione {
   @override
   Future<void> rinomina(String da, String a) => _inFila(() async {
         final r = await _comando('RNFR $da');
-        if (r.codice != 350) throw 'Rinomina non riuscita: ${r.testo}';
+        if (r.codice != 350) throw 'Rinomina non riuscita: ${motivoServer(r.codice)}';
         await _esigi('RNTO $a', errore: 'Rinomina non riuscita');
       });
 
@@ -542,7 +568,7 @@ class ConnessioneSftp implements Connessione {
             : 'Autenticazione fallita: controlla utente e password';
       }
       if (e is SocketException) {
-        throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta} (${e.osError?.message ?? e.message})';
+        throw 'Non riesco a collegarmi a ${sito.host}:${sito.porta}: controlla l\'indirizzo e la connessione';
       }
       if (e is TimeoutException) throw 'Il server non risponde';
       rethrow;
