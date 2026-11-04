@@ -48,7 +48,7 @@ class _SchermataEsploraState extends State<SchermataEsplora> {
       final f = await widget.connessione.elenca(_qui);
       if (mounted) setState(() => _file = f);
     } catch (e) {
-      if (mounted) setState(() => _errore = '$e');
+      if (mounted) setState(() => _errore = fraseErrore('Cartella non disponibile.', e));
     } finally {
       if (mounted) setState(() => _carica = false);
     }
@@ -93,7 +93,7 @@ class _SchermataEsploraState extends State<SchermataEsplora> {
       });
       return true;
     } catch (e) {
-      if (mounted) avviso(context, '$e');
+      if (mounted) avviso(context, fraseErrore('Trasferimento non riuscito.', e));
       return false;
     } finally {
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
@@ -109,7 +109,7 @@ class _SchermataEsploraState extends State<SchermataEsplora> {
         await nativo.invokeMethod('salvaInDownload', {'percorso': tmp.path, 'nome': f.nome});
         if (mounted) avviso(context, 'Scaricato in Download: ${f.nome}');
       } catch (e) {
-        if (mounted) avviso(context, 'Non riesco a salvarlo in Download: $e');
+        if (mounted) avviso(context, fraseErrore('Non riesco a salvarlo in Download.', e));
       }
     } else {
       await SharePlus.instance.share(ShareParams(files: [XFile(tmp.path)]));
@@ -148,7 +148,7 @@ class _SchermataEsploraState extends State<SchermataEsplora> {
       if (mounted) avviso(context, 'Cartella «$n» creata');
       _aggiorna();
     } catch (e) {
-      if (mounted) avviso(context, '$e');
+      if (mounted) avviso(context, fraseErrore('Cartella non creata.', e));
     }
   }
 
@@ -160,7 +160,7 @@ class _SchermataEsploraState extends State<SchermataEsplora> {
       if (mounted) avviso(context, 'Rinominato in «$n»');
       _aggiorna();
     } catch (e) {
-      if (mounted) avviso(context, '$e');
+      if (mounted) avviso(context, fraseErrore('Rinomina non riuscita.', e));
     }
   }
 

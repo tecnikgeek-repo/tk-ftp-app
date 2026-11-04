@@ -192,7 +192,7 @@ Future<String?> sincronizza(BuildContext context, FileCondiviso fc, {bool silenz
       try {
         esito = await leggiInDisparte(testo, cifrato ? frase : null);
       } catch (e) {
-        return 'Il file condiviso non si legge: $e';
+        return fraseErrore('Il file condiviso non si legge.', e);
       }
       if (!esito.fraseSbagliata) break;
       // frase sbagliata: quella salvata non vale più
@@ -226,7 +226,7 @@ Future<String?> sincronizza(BuildContext context, FileCondiviso fc, {bool silenz
       modificato = await fc.scrivi(await scriviInDisparte(fc.arch.siti, fraseScrittura));
       inviati = fc.arch.siti.length;
     } catch (e) {
-      return 'Siti letti, ma il file non si riesce a riscrivere: $e';
+      return fraseErrore('Siti letti, ma il file non si riesce a riscrivere.', e);
     }
   } else {
     try {
@@ -290,7 +290,7 @@ class _SchermataCondivisoState extends State<SchermataCondiviso> {
     try {
       if (!await _fc.scegli()) return;
     } catch (e) {
-      if (mounted) avviso(context, 'Non riesco ad aprire il file: $e');
+      if (mounted) avviso(context, fraseErrore('Non riesco ad aprire il file.', e));
       return;
     }
     if (!mounted) return;

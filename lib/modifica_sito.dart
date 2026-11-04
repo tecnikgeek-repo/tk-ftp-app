@@ -104,7 +104,7 @@ class _SchermataModificaSitoState extends State<SchermataModificaSito> {
     try {
       await Loghi.istanza.manuale(_bozza(), await f.readAsBytes());
     } catch (e) {
-      if (mounted) avviso(context, '$e');
+      if (mounted) avviso(context, fraseErrore('Non riesco a usare questa immagine.', e));
     }
   }
 
